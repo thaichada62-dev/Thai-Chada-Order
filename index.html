@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keranjang Pemesanan Restoran Thai Chada</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f9f9f9; }
+        .menu-item { margin: 10px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background: white; }
+        button { padding: 8px 12px; margin: 5px; background: #ff6b35; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        button:hover { background: #e55a2b; }
+        #cart { margin-top: 20px; padding: 10px; border: 1px solid #000; background: #fff; }
+        #total { font-weight: bold; color: #ff6b35; }
+        h1, h2 { color: #333; }
+    </style>
+</head>
+<body>
+    <h1>Keranjang Pemesanan - Restoran Thai Chada</h1>
+    <p>Tambah item ke keranjang dan pesan langsung!</p>
+    
+    <h2>Menu Makanan</h2>
+    <div class="menu-item">
+        <h3>Pad Thai - Rp 35,000</h3>
+        <p>Mie goreng dengan udang, kacang, dan telur.</p>
+        <button onclick="addToCart('Pad Thai', 35000)">Tambah ke Keranjang</button>
+    </div>
+    <div class="menu-item">
+        <h3>Tom Yum Goong - Rp 40,000</h3>
+        <p>Sup pedas dengan udang segar.</p>
+        <button onclick="addToCart('Tom Yum Goong', 40000)">Tambah ke Keranjang</button>
+    </div>
+    <div class="menu-item">
+        <h3>Khao Man Gai - Rp 30,000</h3>
+        <p>Nasi ayam dengan saus khas Thailand.</p>
+        <button onclick="addToCart('Khao Man Gai', 30000)">Tambah ke Keranjang</button>
+    </div>
+    <div class="menu-item">
+        <h3>Thai Iced Tea - Rp 15,000</h3>
+        <p>Teh Thailand dingin manis.</p>
+        <button onclick="addToCart('Thai Iced Tea', 15000)">Tambah ke Keranjang</button>
+    </div>
+
+    <h2>Keranjang Anda</h2>
+    <div id="cart">Keranjang kosong.</div>
+    <p>Total: Rp <span id="total">0</span></p>
+    
+    <!-- Form untuk info pelanggan -->
+    <label>Nama: <input type="text" id="nama" placeholder="Isi nama Anda"></label><br>
+    <label>Alamat: <input type="text" id="alamat" placeholder="Isi alamat"></label><br>
+    <label>Catatan: <input type="text" id="catatan" placeholder="Opsional"></label><br><br>
+    
+    <button onclick="checkout()">Pesan Sekarang (via WhatsApp & Simpan ke Excel)</button>
+
+    <script>
+        let cart = [];
+        let total = 0;
+
+        function addToCart(item, price) {
+            cart.push({ item, price });
+            total += price;
+            updateCart();
+        }
+
+        function removeFromCart(index) {
+            total -= cart[index].price;
+            cart.splice(index, 1);
+            updateCart();
+        }
+
+        function updateCart() {
+            const cartDiv = document.getElementById('cart');
+            if (cart.length === 0) {
+                cartDiv.innerHTML = 'Keranjang kosong.';
+                return;
+            }
+            cartDiv.innerHTML = '';
+            cart.forEach((item, index) => {
+                cartDiv.innerHTML += `<p>${item.item} - Rp ${item.price.toLocaleString()} <button onclick="removeFromCart(${index})">Hapus</button></p>`;
+            });
+            document.getElementById('total').textContent = total.toLocaleString();
+        }
+
+        async function checkout() {
+            if (cart.length === 0) {
+                alert('Keranjang kosong! Tambah item dulu.');
+                return;
+            }
+
+            const nama = document.getElementById('nama').value;
+            const alamat = document.getElementById('alamat').value;
+            const catatan = document.getElementById('catatan').value;
+
+            // Kirim data ke server untuk simpan ke Excel
+            try {
+                const response = await fetch('http://localhost:3000/save-order', { // Ganti URL jika server di hosting
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cart, total, nama, alamat, catatan })
+                });
+                const result = await response.json();
+                alert(result.message); // Pesan sukses dari server
+            } catch (error) {
+                alert('Gagal menyimpan ke Excel: ' + error.message);
+            }
+
+            // Tetap kirim via WhatsApp
+            const order = cart.map(item => `${item.item} (Rp ${item.price.toLocaleString()})`).join('\n');
+            const message = `Pesanan dari Restoran Thai Chada:\n${order}\nTotal: Rp ${total.toLocaleString()}\n\nNama: ${nama}\nAlamat: ${alamat}\nCatatan: ${catatan}`;
+            window.open(`https://wa.me/62895621058436?text=${encodeURIComponent(message)}`);
+        }
+    </script>
+</body>
+</html>
