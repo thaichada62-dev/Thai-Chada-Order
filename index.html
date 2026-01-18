@@ -11,44 +11,28 @@
         button:hover { background: #e55a2b; }
         #cart { margin-top: 20px; padding: 10px; border: 1px solid #000; background: #fff; }
         #total { font-weight: bold; color: #ff6b35; }
-        h1, h2 { color: #333; }
     </style>
 </head>
 <body>
     <h1>Keranjang Pemesanan - Restoran Thai Chada</h1>
-    <p>Tambah item ke keranjang dan pesan langsung!</p>
-    
-    <h2>Menu Makanan</h2>
     <div class="menu-item">
         <h3>Pad Thai - Rp 35,000</h3>
-        <p>Mie goreng dengan udang, kacang, dan telur.</p>
-        <button onclick="addToCart('Pad Thai', 35000)">Tambah ke Keranjang</button>
+        <button onclick="addToCart('Pad Thai', 35000)">Tambah</button>
     </div>
     <div class="menu-item">
         <h3>Tom Yum Goong - Rp 40,000</h3>
-        <p>Sup pedas dengan udang segar.</p>
-        <button onclick="addToCart('Tom Yum Goong', 40000)">Tambah ke Keranjang</button>
-    </div>
-    <div class="menu-item">
-        <h3>Khao Man Gai - Rp 30,000</h3>
-        <p>Nasi ayam dengan saus khas Thailand.</p>
-        <button onclick="addToCart('Khao Man Gai', 30000)">Tambah ke Keranjang</button>
-    </div>
-    <div class="menu-item">
-        <h3>Thai Iced Tea - Rp 15,000</h3>
-        <p>Teh Thailand dingin manis.</p>
-        <button onclick="addToCart('Thai Iced Tea', 15000)">Tambah ke Keranjang</button>
+        <button onclick="addToCart('Tom Yum Goong', 40000)">Tambah</button>
     </div>
 
     <h2>Keranjang Anda</h2>
     <div id="cart">Keranjang kosong.</div>
     <p>Total: Rp <span id="total">0</span></p>
     
-    <label>Nama: <input type="text" id="nama" placeholder="Isi nama Anda"></label><br>
-    <label>Alamat: <input type="text" id="alamat" placeholder="Isi alamat"></label><br>
-    <label>Catatan: <input type="text" id="catatan" placeholder="Opsional"></label><br><br>
+    <input type="text" id="nama" placeholder="Nama Anda"><br>
+    <input type="text" id="alamat" placeholder="Alamat"><br>
+    <input type="text" id="catatan" placeholder="Catatan"><br><br>
     
-    <button onclick="checkout()">Pesan Sekarang (via WhatsApp & Simpan ke Excel)</button>
+    <button onclick="checkout()">Pesan Sekarang</button>
 
     <script>
         let cart = [];
@@ -60,53 +44,35 @@
             updateCart();
         }
 
-        function removeFromCart(index) {
-            total -= cart[index].price;
-            cart.splice(index, 1);
-            updateCart();
-        }
-
         function updateCart() {
             const cartDiv = document.getElementById('cart');
-            if (cart.length === 0) {
-                cartDiv.innerHTML = 'Keranjang kosong.';
-                return;
-            }
-            cartDiv.innerHTML = '';
-            cart.forEach((item, index) => {
-                cartDiv.innerHTML += `<p>${item.item} - Rp ${item.price.toLocaleString()} <button onclick="removeFromCart(${index})">Hapus</button></p>`;
-            });
+            if (cart.length === 0) { cartDiv.innerHTML = 'Keranjang kosong.'; return; }
+            cartDiv.innerHTML = cart.map((item) => `<p>${item.item} - Rp ${item.price.toLocaleString()}</p>`).join('');
             document.getElementById('total').textContent = total.toLocaleString();
         }
 
         async function checkout() {
-            if (cart.length === 0) {
-                alert('Keranjang kosong! Tambah item dulu.');
-                return;
-            }
+            if (cart.length === 0) { alert('Keranjang kosong!'); return; }
 
             const nama = document.getElementById('nama').value;
             const alamat = document.getElementById('alamat').value;
             const catatan = document.getElementById('catatan').value;
-
-            // Menggunakan URL Google Apps Script yang Anda berikan
             const scriptURL = 'https://script.google.com/macros/s/AKfycbx0hbzR46s-MNdnTCCGaTkv0afy0s7TaH8IzcMql_yQnqJvTO5O46eiuuH42EBZ--FfFw/exec';
 
-            try {
-                // Proses simpan data ke Google Sheets (Excel)
-                // Menggunakan mode 'no-cors' agar tidak terhambat kebijakan keamanan browser
-                fetch(scriptURL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ cart, total, nama, alamat, catatan })
-                });
-                
-                alert('Data sedang dikirim ke Excel...');
-            } catch (error) {
-                console.error('Gagal menyimpan:', error);
-            }
+            // Kirim data tanpa menunggu respon agar tidak kena error CORS
+            fetch(scriptURL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cart, total, nama, alamat, catatan })
+            });
 
-            // Proses kirim via WhatsApp
-            const orderList = cart.map(item => `- ${item.item} (Rp ${item.price.toLocaleString()})`).join('\n');
-            const message = `Halo Thai Chada, saya ingin memesan:\
+            alert('Data sedang dikirim... Silakan lanjut ke WhatsApp.');
+
+            const order = cart.map(item => `- ${item.item}`).join('\n');
+            const message = `Halo, saya ingin pesan:\n${order}\nTotal: Rp ${total}\nNama: ${nama}`;
+            window.open(`https://wa.me/62895621058436?text=${encodeURIComponent(message)}`);
+        }
+    </script>
+</body>
+</html>
