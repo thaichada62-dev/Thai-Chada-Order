@@ -44,7 +44,6 @@
     <div id="cart">Keranjang kosong.</div>
     <p>Total: Rp <span id="total">0</span></p>
     
-    <!-- Form untuk info pelanggan -->
     <label>Nama: <input type="text" id="nama" placeholder="Isi nama Anda"></label><br>
     <label>Alamat: <input type="text" id="alamat" placeholder="Isi alamat"></label><br>
     <label>Catatan: <input type="text" id="catatan" placeholder="Opsional"></label><br><br>
@@ -90,24 +89,24 @@
             const alamat = document.getElementById('alamat').value;
             const catatan = document.getElementById('catatan').value;
 
-            // Kirim data ke server untuk simpan ke Excel
+            // Menggunakan URL Google Apps Script yang Anda berikan
+            const scriptURL = 'https://script.google.com/macros/s/AKfycbx0hbzR46s-MNdnTCCGaTkv0afy0s7TaH8IzcMql_yQnqJvTO5O46eiuuH42EBZ--FfFw/exec';
+
             try {
-                const response = await fetch('http://localhost:3000/save-order', { // Ganti URL jika server di hosting
+                // Proses simpan data ke Google Sheets (Excel)
+                // Menggunakan mode 'no-cors' agar tidak terhambat kebijakan keamanan browser
+                fetch(scriptURL, {
                     method: 'POST',
+                    mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ cart, total, nama, alamat, catatan })
                 });
-                const result = await response.json();
-                alert(result.message); // Pesan sukses dari server
+                
+                alert('Data sedang dikirim ke Excel...');
             } catch (error) {
-                alert('Gagal menyimpan ke Excel: ' + error.message);
+                console.error('Gagal menyimpan:', error);
             }
 
-            // Tetap kirim via WhatsApp
-            const order = cart.map(item => `${item.item} (Rp ${item.price.toLocaleString()})`).join('\n');
-            const message = `Pesanan dari Restoran Thai Chada:\n${order}\nTotal: Rp ${total.toLocaleString()}\n\nNama: ${nama}\nAlamat: ${alamat}\nCatatan: ${catatan}`;
-            window.open(`https://wa.me/62895621058436?text=${encodeURIComponent(message)}`);
-        }
-    </script>
-</body>
-</html>
+            // Proses kirim via WhatsApp
+            const orderList = cart.map(item => `- ${item.item} (Rp ${item.price.toLocaleString()})`).join('\n');
+            const message = `Halo Thai Chada, saya ingin memesan:\
